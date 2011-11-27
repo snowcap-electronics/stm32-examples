@@ -8,8 +8,16 @@
 #include <sys/stat.h>
 #include <sys/times.h>
 #include <sys/unistd.h>
-#include "stm32f10x_usart.h"
+#include <sys/types.h>
+//#include "stm32f10x_usart.h"
 
+
+extern int  _ebss;
+
+// Disabled:
+#define STDOUT_USART 0
+#define STDERR_USART 0
+#define STDIN_USART 0
 
 #ifndef STDOUT_USART
 #define STDOUT_USART 2
@@ -135,12 +143,11 @@ int _lseek(int file, int ptr, int dir) {
  */
 caddr_t _sbrk(int incr) {
 
-    extern char _ebss; // Defined by the linker
-    static char *heap_end;
+    static char *heap_end = NULL;
     char *prev_heap_end;
 
-    if (heap_end == 0) {
-        heap_end = &_ebss;
+    if (heap_end == NULL) {
+        heap_end = (unsigned char *)&_ebss;
     }
     prev_heap_end = heap_end;
 
@@ -180,6 +187,9 @@ int _read(int file, char *ptr, int len) {
 #elif STDIN_USART == 3
             while ((USART3->SR & USART_FLAG_RXNE) == (uint16_t)RESET) {}
             char c = (char)(USART3->DR & (uint16_t)0x01FF);
+#else
+            // Do nothing
+            char c = '0';
 #endif
             *ptr++ = c;
             num++;
@@ -250,6 +260,8 @@ int _write(int file, char *ptr, int len) {
 #elif  STDOUT_USART == 3
             while ((USART3->SR & USART_FLAG_TC) == (uint16_t)RESET) {}
             USART3->DR = (*ptr++ & (uint16_t)0x01FF);
+#else
+        // Do nothing
 #endif
         }
         break;
@@ -265,6 +277,8 @@ int _write(int file, char *ptr, int len) {
 #elif  STDERR_USART == 3
             while ((USART3->SR & USART_FLAG_TC) == (uint16_t)RESET) {}
             USART3->DR = (*ptr++ & (uint16_t)0x01FF);
+#else
+        // Do nothing
 #endif
         }
         break;
