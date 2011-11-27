@@ -98,9 +98,12 @@ FEATURES = -DUSE_STM322xG_EVAL \
            -DUSE_ULPI_PHY \
            -DUSB_OTG_FS_LOW_PWR_MGMT_SUPPORT
 
-all: $(SRC) $(PROJECT)
+all: $(SRC) $(PROJECT).elf $(PROJECT).bin
 
-$(PROJECT): $(OBJ) 
+$(PROJECT).bin: $(PROJECT).elf
+	$(CP) -O binary $(PROJECT).elf $@
+
+$(PROJECT).elf: $(OBJ)
 	$(LD) $(LDFLAGS) $(OBJ) -o $@
 
 $(COBJ): %.o: %.c
